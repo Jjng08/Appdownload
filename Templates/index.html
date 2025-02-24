@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargador de Reels</title>
+    <link rel="stylesheet" href="Static/css/styles.css">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Descargador de Reels de Instagram</h1>
+        <div class="download-form">
+            <input type="text" id="urlInput" placeholder="Pega la URL del reel aquí">
+            <button onclick="descargarReel()">Descargar</button>
+        </div>
+        <div id="mensaje"></div>
+        <div class="loader" id="loader" style="display: none;"></div>
+    </div>
+
+    <script>
+        function descargarReel() {
+            const url = document.getElementById('urlInput').value;
+            const mensaje = document.getElementById('mensaje');
+            const loader = document.getElementById('loader');
+            
+            if (!url) {
+                mensaje.innerHTML = '<p class="error">Por favor, ingresa una URL</p>';
+                return;
+            }
+
+            loader.style.display = 'block';
+            mensaje.innerHTML = '';
+
+            fetch('/descargar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.error) {
+                    mensaje.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    mensaje.innerHTML = `<p class="success">${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                mensaje.innerHTML = `<p class="error">Error: ${error}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
