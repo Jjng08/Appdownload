@@ -1,59 +1,107 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descargador de Reels</title>
-    <link rel="stylesheet" href="Static/css/styles.css">
-    
+    <title>Descarga | Reels | Youtube </title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Primero cargar Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Luego tu script separado -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('reelDownloader', () => ({
+                url: '',
+                mensaje: '',
+                loading: false,
+                tipoMensaje: '',
+                
+                async descargarReel() {
+                    this.mensaje = '';
+                    
+                    if (!this.url.trim()) {
+                        this.mostrarMensaje('Por favor, ingresa una URL válida.', 'error');
+                        return;
+                    }
+                    this.loading = true;
+                    try {
+                        const response = await fetch('/descargar', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `url=${encodeURIComponent(this.url)}`
+                        });
+                        const data = await response.json();
+                        if (data.error) {
+                            this.mostrarMensaje(data.error, 'error');
+                        } else {
+                            this.mostrarMensaje(data.message, 'success');
+                            this.url = '';
+                        }
+                    } catch (error) {
+                        this.mostrarMensaje(`Error: ${error.message}`, 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                mostrarMensaje(texto, tipo) {
+                    this.mensaje = texto;
+                    this.tipoMensaje = tipo;
+                    setTimeout(() => {
+                        this.mensaje = '';
+                    }, 5000);
+                }
+            }))
+        });
+    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Descargador de Reels de Instagram</h1>
-        <div class="download-form">
-            <input type="text" id="urlInput" placeholder="Pega la URL del reel aquí">
-            <button onclick="descargarReel()">Descargar</button>
+    <!-- Navbar minimalista -->
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">InstaDown</a>
+        <div class="navbar-menu">
+            <a href="#">Inicio</a>
+            <a href="#">Guía</a>
+            <a href="#">Acerca de</a>
         </div>
-        <div id="mensaje"></div>
-        <div class="loader" id="loader" style="display: none;"></div>
-    </div>
-
+    </nav>
+    
+    <!-- Main content -->
+    <main>
+        <section class="hero-section" x-data="reelDownloader">
+            <h1>Descarga Reels de Instagram</h1>
+            <p class="Ejemplo">Ejemplo del link: https://www.instagram.com/reel/DGa7oUyIpbD/</p>
+            <div class="download-form">
+                <input 
+                    type="text" 
+                    x-model.trim="url" 
+                    placeholder="Pega la URL del reel aquí"
+                    @keyup.enter="descargarReel"
+                    :disabled="loading"
+                >
+                <button 
+                    @click="descargarReel" 
+                    :disabled="loading"
+                >   Descargar
+                    <template x-if="!loading">Descargar</template>
+                    <template x-if="loading">Descargando...</template>
+                </button>
+            </div>
+            <template x-if="mensaje">
+                <div 
+                    x-transition 
+                    :class="{'error': tipoMensaje === 'error', 'success': tipoMensaje === 'success'}"
+                    x-text="mensaje"
+                ></div>
+            </template>
+            <div class="loader" x-show="loading" x-transition></div>
+        </section>
+    </main>
+    
     <script>
-        function descargarReel() {
-            const url = document.getElementById('urlInput').value;
-            const mensaje = document.getElementById('mensaje');
-            const loader = document.getElementById('loader');
-            
-            if (!url) {
-                mensaje.innerHTML = '<p class="error">Por favor, ingresa una URL</p>';
-                return;
-            }
-
-            loader.style.display = 'block';
-            mensaje.innerHTML = '';
-
-            fetch('/descargar', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `url=${encodeURIComponent(url)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                loader.style.display = 'none';
-                if (data.error) {
-                    mensaje.innerHTML = `<p class="error">${data.error}</p>`;
-                } else {
-                    mensaje.innerHTML = `<p class="success">${data.message}</p>`;
-                }
-            })
-            .catch(error => {
-                loader.style.display = 'none';
-                mensaje.innerHTML = `<p class="error">Error: ${error}</p>`;
-            });
-        }
+        
     </script>
 </body>
 </html>

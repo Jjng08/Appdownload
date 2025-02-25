@@ -3,7 +3,7 @@ from model import descargar_reel
 import os
 from pathlib import Path
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 @app.route('/')
 def home():
